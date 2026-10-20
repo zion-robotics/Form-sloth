@@ -29,7 +29,7 @@ function fillPage(bank) {
     for (const entry of bank) {
       for (const phrase of entry.match) {
         const p = norm(phrase);
-        if (p.length > bestLen && new RegExp("\\b" + esc(p) + "\\b").test(label)) { best = entry; bestLen = p.length; }
+        if (p.length > bestLen && new RegExp("\\b" + esc(p) + "s?\\b").test(label)) { best = entry; bestLen = p.length; }
       }
     }
     return best;
