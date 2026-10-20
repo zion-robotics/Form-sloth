@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check JavaScript syntax
+        run: find . -name "*.js" -print0 | xargs -0 -r -n1 node --check
+
+      - name: Validate manifest.json
+        run: node -e "JSON.parse(require('node:fs').readFileSync('manifest.json', 'utf8'));"
+
+      - name: Create extension archive
+        run: zip -r extension.zip . -x ".git/*" ".github/*"
+
+      - name: Upload extension artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: extension
+          path: extension.zip
