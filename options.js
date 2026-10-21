@@ -8,6 +8,10 @@ chrome.storage.local.get("bank", ({ bank: saved }) => {
     const lab = document.createElement("label");
     lab.textContent = e.label;
     const input = document.createElement(e.long ? "textarea" : "input");
+    input.setAttribute("autocomplete", "nope");
+    input.name = "fs_" + e.id;
+    input.id = "fs_" + e.id;
+    lab.htmlFor = input.id;
     input.value = e.answer || "";
     input.dataset.index = i;
     wrap.append(lab, input);
