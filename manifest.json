@@ -1,9 +1,10 @@
 {
   "manifest_version": 3,
   "name": "FormSloth",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Fills repetitive forms from answers you write once. Runs fully on your machine.",
   "permissions": ["storage", "activeTab", "scripting"],
+  "host_permissions": ["http://127.0.0.1/*", "http://localhost/*"],
   "action": { "default_popup": "popup.html", "default_title": "FormSloth" },
   "options_page": "options.html"
 }

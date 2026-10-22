@@ -3,17 +3,22 @@
 <head>
   <meta charset="utf-8">
   <style>
-    body { width: 300px; font-family: system-ui, sans-serif; padding: 12px; color: #222; }
+    body { width: 320px; font-family: system-ui, sans-serif; padding: 12px; color: #222; }
     button { width: 100%; padding: 10px; margin-bottom: 8px; font: inherit; border: 0; border-radius: 6px; cursor: pointer; }
+    button[hidden] { display: none; }
     #fill { background: #4a6b3a; color: #fff; }
+    #draft { background: #b8741a; color: #fff; }
     #profile { background: #eee; }
     #out { font-size: 13px; line-height: 1.4; }
     #out ul { padding-left: 18px; margin: 4px 0; }
+    #status { font-size: 13px; color: #b8741a; margin: 4px 0; }
   </style>
 </head>
 <body>
   <button id="fill">Fill this form</button>
+  <button id="draft" hidden>Draft the rest with Gemma</button>
   <button id="profile">Edit my profile</button>
+  <div id="status"></div>
   <div id="out"></div>
   <script src="bank.js"></script>
   <script src="popup.js"></script>
