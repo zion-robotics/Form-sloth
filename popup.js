@@ -2,13 +2,15 @@ const OLLAMA_URL = "http://127.0.0.1:11434/api/chat";
 const MODEL = "gemma3:1b";
 
 const SYSTEM = "You complete web forms for the person described in PROFILE. " +
-  "Answer the form question in first person, in plain natural English, in 2 to 4 sentences unless the question clearly needs more or less. " +
-  "Use only facts that appear in PROFILE. Do not state preferences, favorites or opinions that PROFILE does not state, such as a favorite tool or something the person loves. If PROFILE does not contain enough to answer honestly, reply with exactly SKIP. " + 
+  "Answer the form question in first person, in plain natural English, in 2 to 3 sentences unless the question clearly needs more or less. " +
+  "Use only facts that appear in PROFILE. Do not state preferences, favorites or opinions that PROFILE does not state, such as a favorite tool or something the person loves. If PROFILE does not contain enough to answer honestly, reply with exactly SKIP. " +
   "Do not invent achievements, dates, numbers or names. Output only the answer text, with no quotes, no preamble, and no em dashes.";
 
 // Questions worth sending to the model, and fields that should never be drafted.
 const QUESTION_LIKE = /\?|describe|explain|why|what|how|tell|share|briefly|idea|interest|experience|achievement|goal/i;
 const NEVER_DRAFT = /address|street|postal|zip|province|date|sign|captcha|password/i;
+// A 1B model ignored the prompt rule about opinions, so these are skipped in code and left for the person.
+const OPINION = /favou?rite|\blove\b|enjoy|prefer|like most|most like/i;
 
 let pending = []; // unknown text fields from the last fill: { frameId, id, label, kind }
 
@@ -120,7 +122,7 @@ async function askGemma(question, profile) {
         model: MODEL,
         stream: false,
         options: { temperature: 0.3, num_predict: 150, num_ctx: 2048 },
-keep_alive: "15m",
+        keep_alive: "15m",
         messages: [
           { role: "system", content: SYSTEM },
           { role: "user", content: "PROFILE:\n" + profile + "\n\nFORM QUESTION:\n" + question }
@@ -198,6 +200,7 @@ document.getElementById("draft").addEventListener("click", async () => {
   try {
     for (let i = 0; i < pending.length; i++) {
       const q = pending[i];
+      if (OPINION.test(q.label)) { skipped += 1; continue; }
       status.textContent = `Drafting ${i + 1} of ${pending.length}. Keep this popup open.`;
       const text = await askGemma(q.label, profile);
       if (!text || /^skip\b/i.test(text)) { skipped += 1; continue; }
@@ -212,7 +215,7 @@ document.getElementById("draft").addEventListener("click", async () => {
       });
       applied += (r[0] && r[0].result) || 0;
     }
-    status.textContent = `Drafted ${applied} answer(s)` + (skipped ? `, skipped ${skipped} the profile could not answer.` : ".") +
+    status.textContent = `Drafted ${applied} answer(s)` + (skipped ? `, skipped ${skipped} for you to answer yourself.` : ".") +
       " Review the dashed orange fields before you submit.";
     draftBtn.hidden = true;
   } catch (err) {
