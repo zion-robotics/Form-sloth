@@ -1,188 +1,81 @@
-# FormSloth — Fill once. Reuse everywhere.
+# FormSloth
 
-FormSloth is a Chrome extension for reducing repetitive form filling, especially
-for hackathons, scholarships, events, and applications.
+A browser extension that fills repetitive forms from answers you write once. A small local Gemma model drafts replies to questions it has not seen before. Nothing leaves your machine.
+
+Built for the DEV Hacktoberfest Open-Source AI Challenge, Week 3 (Slow and Steady).
 
 ## The problem
 
-Many applications ask the same basic questions repeatedly: name, email,
-school, location, links, team details, and short background information.
-Re-entering those answers takes time and makes it easier to introduce
-inconsistent or accidental typos. FormSloth lets you save answers once and
-reuse them on compatible web forms.
-
-## Features
-
-The current extension includes:
-
-- A browser-local profile with reusable answers for common questions.
-- A profile page opened through the extension's **Edit my profile** button.
-- A built-in question bank covering identity, contact, education, work,
-  portfolio links, hackathon details, and several longer-answer prompts.
-- Matching based on visible field labels and related accessible metadata,
-  including `aria-label`, `aria-labelledby`, placeholders, and field names.
-- Filling of supported empty text inputs, textareas, and select controls.
-- Support for forms inside frames where Chrome permits script injection.
-- A report showing how many fields were filled, fields that need profile
-  answers, and questions not found in the bank.
-- Protection against overwriting non-empty fields.
-- Visual marking of fields filled by FormSloth.
-
-The popup also contains an in-progress Gemma/Ollama drafting path. It is not
-documented as a complete or generally supported feature; Gemma integration is
-planned and remains unfinished.
+Hackathon sign-ups, scholarship forms and event registrations all ask the same things: name, email, school, GitHub, why do you want to join. Browser autofill handles the short fields. It does nothing for the open questions, and those are the ones people copy and paste from an old document every time.
 
 ## How it works
 
-### 1. Set up a profile
+1. You write your answers once on the profile page. The extension ships with about thirty common questions, each with a list of label phrases that should trigger it (for example "where are you from" and "country of residence" both map to Country).
+2. On a form, click **Fill this form**. Each field's label is matched against the bank and filled with your saved answer. No AI is involved in this step, so it is instant. Filled fields get a solid green outline.
+3. Questions the bank does not recognize that look like real questions get a **Draft with Gemma** button. Your saved profile and the question go to a model running in Ollama on your own computer, and the reply is written into the field with a dashed orange outline.
+4. You read the orange fields, edit them, and submit. Drafts are suggestions, not final answers.
 
-Open the extension popup and choose **Edit my profile**. Enter answers for the
-fields you want to reuse, then choose **Save**. Leave an answer empty when you
-do not want FormSloth to fill that item.
+## What it never touches
 
-The built-in bank can be extended by saved entries, although the current UI
-does not provide a separate editor for creating those additional entries.
+- Password, card, ID-number and similar fields
+- Checkboxes and radio buttons, so consent boxes are always yours to tick
+- Address, date and signature fields (they are not sent to the model either)
+- Any field that already has text in it
 
-### 2. Match questions
+## Install
 
-Choose **Fill this form** on the page you want to complete. FormSloth scans
-visible, enabled, editable `input`, `textarea`, and `select` elements. It
-builds a label from available page metadata and compares normalized text
-against phrases in the question bank.
+You need Chrome or Edge, and Ollama.
 
-The longest matching phrase wins. For a select control, FormSloth chooses an
-option whose visible text overlaps with the saved answer. If no match is
-available, or a matching profile answer is empty, the field is reported rather
-than guessed.
+1. Install Ollama from ollama.com and pull a model:
+   ```
+   ollama pull gemma3:1b
+   ```
+2. Let Ollama accept requests from browser extensions. On Windows:
+   ```
+   setx OLLAMA_ORIGINS "chrome-extension://*"
+   ```
+   Then quit Ollama from the system tray and start it again. You can check it with:
+   ```
+   curl.exe -i http://127.0.0.1:11434/api/tags -H "Origin: chrome-extension://test"
+   ```
+   The first line should say `200 OK`.
+3. Clone or download this repo.
+4. Open `chrome://extensions`, turn on Developer mode, click **Load unpacked**, and select the folder that contains `manifest.json`.
+5. Click the extension, choose **Edit my profile**, fill in your answers and save.
 
-### 3. Fill the form
+## Choosing a model
 
-FormSloth writes matching answers into empty supported fields and dispatches
-input and change events so pages can observe the update. It does not replace
-values that are already present. Filled fields receive a green outline while
-the popup displays a summary of the result.
+The model name is the `MODEL` constant at the top of `popup.js`. I used `gemma3:1b` because the machine I built this on has 4GB of RAM, and a larger Gemma would not fit comfortably. If you have more memory, a bigger Gemma should write better drafts. Change the constant and pull the model with Ollama. I have not tested other sizes.
 
-## Installation
+## Privacy
 
-FormSloth is currently distributed as unpacked extension source.
+- Your profile is stored in the browser's local extension storage.
+- The only network request the extension makes is to Ollama at `127.0.0.1:11434` on your own machine.
+- No account, no server and no API key.
 
-### Chrome
+## Known limitations
 
-1. Download or clone this repository.
-2. Open `chrome://extensions`.
-3. Turn on **Developer mode**.
-4. Select **Load unpacked**.
-5. Choose the repository folder containing `manifest.json`.
-6. Pin FormSloth if you want it readily available in the toolbar.
+- **Drafting is slow without a GPU.** On a 4GB laptop with no GPU, drafting a handful of answers took minutes, not seconds. Keep the popup open until it finishes, because clicking on the page closes it and cancels the request.
+- **Small models embellish.** In testing, the 1B model mostly reused sentences from the profile, but it also added a phrase I never wrote and, in one case, claimed a favorite tool when my profile only listed it as a skill. The prompt now tells it not to state preferences, but a small model will not always obey. Read every orange field.
+- **Radio buttons and checkboxes are skipped.** A Yes/No question such as "Have you participated in a hackathon?" is left for you to answer.
+- **Matching is phrase based.** A field is matched when its label contains a known phrase as whole words. Unusual wording will land in the "Not in the bank yet" list, and you can add phrases to `bank.js`.
+- **Tested on a small number of forms.** So far this means a JotForm registration page and a Google Form. Other form builders may label fields differently.
+- **Chrome and Edge only**, and it cannot run on browser-internal pages or the Chrome Web Store.
 
-### Microsoft Edge
+## Project layout
 
-1. Download or clone this repository.
-2. Open `edge://extensions`.
-3. Turn on **Developer mode**.
-4. Select **Load unpacked**.
-5. Choose the repository folder containing `manifest.json`.
-6. Pin FormSloth if you want it readily available in the toolbar.
-
-After changing extension files, return to the extensions page and use the
-extension's **Reload** control.
-
-## Configuration and use
-
-1. Load the extension and open its popup.
-2. Select **Edit my profile**.
-3. Complete only the profile fields you are comfortable storing in the
-   browser's extension storage.
-4. Select **Save**.
-5. Open a compatible form and select **Fill this form**.
-6. Review the filled values and any fields reported as unmatched or missing
-   profile answers before submitting the form.
-
-FormSloth is designed as an assistive filler, not an automatic submission
-tool. You remain responsible for checking every value and submitting the form
-yourself.
-
-## Privacy and safety
-
-- Profile answers are saved with `chrome.storage.local`, under the `bank` key.
-  The extension does not include an account system or a sync service.
-- The profile page advises users not to store passwords, card numbers, or ID
-  numbers.
-- The filler skips password, hidden, file, checkbox, radio, submit, button,
-  image, and reset inputs. It also skips fields whose label or autocomplete
-  metadata matches patterns for passwords, passcodes, card numbers, CVV/CVC,
-  SSNs, passports, national IDs, NIN, BVN, PIN, or OTP.
-- Empty fields with no matching bank entry are not guessed. Existing non-empty
-  values are not overwritten.
-- The manifest grants `activeTab`, `scripting`, and `storage` permissions.
-  Host permissions are limited to `http://127.0.0.1/*` and
-  `http://localhost/*`. Chrome may still restrict injection on browser
-  internal pages and Web Store pages.
-- The current code contains a draft-only request path to a local Ollama
-  endpoint at `http://127.0.0.1:11434/api/chat`, using the `gemma3:1b` model.
-  That path is unfinished and is not a completed FormSloth feature. If it is
-  enabled or used in a development build, profile answers and a form question
-  may be sent to that local service. The repository contains no code that sends
-  profile data to a FormSloth-hosted service.
-- These checks are pattern-based, not a guarantee that every sensitive field is
-  recognized. Users should never store highly sensitive information in the
-  profile and should review fields before submitting.
-- The extension does not validate whether an answer is correct for a particular
-  form, and page scripts can have their own behavior when fields are changed.
-
-## Current limitations and future plans
-
-Current limitations include:
-
-- Matching depends on the wording and metadata exposed by a page; unusual or
-  dynamically rendered forms may not match.
-- The bank has fixed built-in entries, and the profile UI is focused on editing
-  answers rather than managing matching phrases.
-- Select matching is based on text overlap and may not choose an option for
-  every form.
-- Some controls are intentionally skipped, including file uploads, choices,
-  password-like fields, and other sensitive-looking fields.
-- Browser restrictions can prevent FormSloth from running on some pages.
-- There is no form submission, answer validation, account, or cloud sync
-  feature.
-- Gemma/Ollama drafting is planned but not complete.
-
-Possible future work includes improving matching and field-type support,
-providing safer and clearer profile management, adding more transparent
-review controls, and completing the optional local drafting workflow without
-turning it into an automatic submission system.
-
-## Project structure
-
-```text
-.
-├── manifest.json       # Chrome extension manifest and permissions
-├── bank.js             # Default question bank and saved-bank merging
-├── popup.html          # Toolbar popup UI
-├── popup.js            # Form scanning, matching, filling, and popup actions
-├── options.html        # Profile editor UI
-├── options.js          # Profile loading and saving
-└── .github/
-    └── workflows/
-        └── ci.yml      # JavaScript syntax, manifest, and archive checks
+```
+manifest.json   extension manifest (Manifest V3)
+bank.js         the question bank and the merge logic
+popup.html      the popup
+popup.js        field matching, filling and the Ollama call
+options.html    profile page
+options.js      profile page logic
+.github/        CI workflow
 ```
 
-## Contributing
+## Development notes
 
-1. Fork the repository and create a focused branch.
-2. Make a small, user-visible change without committing secrets or personal
-   profile data.
-3. Test the extension by loading it unpacked in Chrome or Edge and trying it
-   on representative forms. Review every filled value manually.
-4. Run the repository's available checks before opening a pull request:
+The CI workflow, the first expansion of the question bank, and parts of the code were produced with GitHub Copilot's coding agent and Claude. I reviewed and merged the pull requests myself and tested the extension on real forms.
 
-   ```bash
-   find . -name "*.js" -print0 | xargs -0 -r -n1 node --check
-   node -e "JSON.parse(require('node:fs').readFileSync('manifest.json', 'utf8'));"
-   ```
-
-5. Describe the behavior change, limitations, and manual testing performed in
-   the pull request.
-
-Please keep changes narrowly scoped and update the documentation when
-user-facing behavior changes.
+CI runs on every push and pull request. It syntax-checks each JavaScript file, validates `manifest.json`, and uploads a zip of the extension as a build artifact.

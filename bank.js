@@ -12,7 +12,7 @@ const DEFAULT_BANK = [
   { id: "course", label: "Course / field of study", match: ["course", "major", "field of study", "department", "program of study"], answer: "" },
   { id: "year", label: "Year / level of study", match: ["year of study", "current level", "current year"], answer: "" },
   { id: "role", label: "Current role", match: ["current role", "occupation", "job title", "profession", "role"], answer: "" },
-  { id: "github", label: "GitHub", match: ["github", "git hub"], answer: "" },
+  { id: "github", label: "GitHub", match: ["github", "git hub", "social link"], answer: "" },
   { id: "portfolio", label: "Portfolio / website", match: ["portfolio", "website", "personal site"], answer: "" },
   { id: "linkedin", label: "LinkedIn", match: ["linkedin"], answer: "" },
   { id: "twitter", label: "X / Twitter", match: ["twitter", "x handle", "x username"], answer: "" },

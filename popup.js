@@ -3,7 +3,7 @@ const MODEL = "gemma3:1b";
 
 const SYSTEM = "You complete web forms for the person described in PROFILE. " +
   "Answer the form question in first person, in plain natural English, in 2 to 4 sentences unless the question clearly needs more or less. " +
-  "Use only facts that appear in PROFILE. If PROFILE does not contain enough to answer honestly, reply with exactly SKIP. " +
+  "Use only facts that appear in PROFILE. Do not state preferences, favorites or opinions that PROFILE does not state, such as a favorite tool or something the person loves. If PROFILE does not contain enough to answer honestly, reply with exactly SKIP. " + 
   "Do not invent achievements, dates, numbers or names. Output only the answer text, with no quotes, no preamble, and no em dashes.";
 
 // Questions worth sending to the model, and fields that should never be drafted.
@@ -119,7 +119,8 @@ async function askGemma(question, profile) {
       body: JSON.stringify({
         model: MODEL,
         stream: false,
-        options: { temperature: 0.3 },
+        options: { temperature: 0.3, num_predict: 150, num_ctx: 2048 },
+keep_alive: "15m",
         messages: [
           { role: "system", content: SYSTEM },
           { role: "user", content: "PROFILE:\n" + profile + "\n\nFORM QUESTION:\n" + question }
